@@ -1,0 +1,61 @@
+{
+  "rules": {
+    ".read": "true",
+    ".write": "true",
+    "devices": {
+      "$deviceId": {
+        "latest": {
+          ".validate": "newData.hasChildren(['latitude', 'longitude'])",
+          "latitude": {
+            ".validate": "newData.isNumber() && newData.val() >= -90 && newData.val() <= 90"
+          },
+          "longitude": {
+            ".validate": "newData.isNumber() && newData.val() >= -180 && newData.val() <= 180"
+          },
+          "satellites": {
+            ".validate": "!newData.exists() || (newData.isNumber() && newData.val() >= 0)"
+          },
+          "hdop": {
+            ".validate": "!newData.exists() || newData.isNumber() || newData.val() == null"
+          },
+          "distanceM": {
+            ".validate": "!newData.exists() || newData.isNumber()"
+          },
+          "outside": {
+            ".validate": "!newData.exists() || newData.isBoolean()"
+          }
+        },
+        "history": {
+          "$recordId": {
+            ".validate": "newData.hasChildren(['latitude', 'longitude'])",
+            "latitude": {
+              ".validate": "newData.isNumber() && newData.val() >= -90 && newData.val() <= 90"
+            },
+            "longitude": {
+              ".validate": "newData.isNumber() && newData.val() >= -180 && newData.val() <= 180"
+            }
+          }
+        }
+      }
+    },
+    "geofence": {
+      ".validate": "newData.hasChildren(['centerLat', 'centerLon', 'radiusM'])",
+      "centerLat": {
+        ".validate": "newData.isNumber() && newData.val() >= -90 && newData.val() <= 90"
+      },
+      "centerLon": {
+        ".validate": "newData.isNumber() && newData.val() >= -180 && newData.val() <= 180"
+      },
+      "radiusM": {
+        ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() <= 50000"
+      }
+    },
+    "alerts": {
+      "$deviceId": {
+        "$alertId": {
+          ".validate": "newData.hasChildren(['type', 'timestamp'])"
+        }
+      }
+    }
+  }
+}

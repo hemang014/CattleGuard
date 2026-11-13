@@ -282,3 +282,90 @@ export function playBuzzerAlertSound() {
     console.warn('Audio buzzer play prevented by browser autoplay policy:', err);
   }
 }
+
+/**
+ * Calculates forward azimuth (bearing) from Point A to Point B in degrees (0° - 360°)
+ */
+export function calculateBearing(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  if (lat1 === lat2 && lon1 === lon2) return 0;
+  const phi1 = (lat1 * Math.PI) / 180;
+  const phi2 = (lat2 * Math.PI) / 180;
+  const deltaLambda = ((lon2 - lon1) * Math.PI) / 180;
+
+  const y = Math.sin(deltaLambda) * Math.cos(phi2);
+  const x = Math.cos(phi1) * Math.sin(phi2) - Math.sin(phi1) * Math.cos(phi2) * Math.cos(deltaLambda);
+  const theta = Math.atan2(y, x);
+
+  const bearing = ((theta * 180) / Math.PI + 360) % 360;
+  return Math.round(bearing * 10) / 10;
+}
+
+/**
+ * Convert numerical bearing (0° - 360°) into compass cardinal heading (N, NE, E, etc.)
+ */
+export function getCompassHeading(degrees: number): string {
+  const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+  const index = Math.round(((degrees % 360) / 22.5)) % 16;
+  return directions[index];
+}
+
+/**
+ * Calculates pasture coverage area from circular geofence radius
+ */
+export function calculatePastureArea(radiusM: number): {
+  squareMeters: number;
+  hectares: number;
+  acres: number;
+} {
+  const areaSqMeters = Math.PI * Math.pow(radiusM, 2);
+  const hectares = areaSqMeters / 10000;
+  const acres = areaSqMeters * 0.000247105;
+
+  return {
+    squareMeters: Math.round(areaSqMeters),
+    hectares: Math.round(hectares * 100) / 100,
+    acres: Math.round(acres * 100) / 100,
+  };
+}
+
+/**
+ * Generates RFC 4180 compliant CSV string from telemetry GPS records for dataset audits
+ */
+export function generateTelemetryCsv(
+  records: Array<{
+    id?: string;
+    timestamp?: unknown;
+    latitude: number;
+    longitude: number;
+    satellites?: number;
+    hdop?: number | null;
+    distanceM?: number;
+    outside?: boolean;
+  }>
+): string {
+  const headers = ['Record ID', 'Timestamp (ISO)', 'Latitude', 'Longitude', 'Satellites', 'HDOP', 'Distance from Center (m)', 'Geofence Status'];
+  const rows = records.map((record, index) => {
+    let isoTime = '';
+    if (record.timestamp) {
+      if (typeof record.timestamp === 'string') {
+        isoTime = record.timestamp;
+      } else if (typeof record.timestamp === 'number') {
+        const ms = record.timestamp < 10000000000 ? record.timestamp * 1000 : record.timestamp;
+        isoTime = new Date(ms).toISOString();
+      }
+    }
+
+    return [
+      record.id || `REC-${index + 1}`,
+      `"${isoTime}"`,
+      record.latitude.toFixed(8),
+      record.longitude.toFixed(8),
+      record.satellites !== undefined ? record.satellites : '',
+      record.hdop !== null && record.hdop !== undefined ? record.hdop.toFixed(2) : '',
+      record.distanceM !== undefined ? record.distanceM.toFixed(1) : '',
+      record.outside ? 'OUTSIDE' : 'INSIDE',
+    ].join(',');
+  });
+
+  return [headers.join(','), ...rows].join('\r\n');
+}
