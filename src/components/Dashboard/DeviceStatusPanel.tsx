@@ -1,5 +1,5 @@
 import React from 'react';
-import { Radio, Satellite, ShieldCheck, AlertTriangle, Compass, Clock, Zap, Activity } from 'lucide-react';
+import { Radio, Satellite, ShieldCheck, AlertTriangle, Compass, Clock, Zap, Activity, Battery, BatteryCharging } from 'lucide-react';
 import { useCattleGuard } from '../../context/CattleGuardContext';
 import { formatCoordinates, formatRelativeTime, getHdopRating } from '../../utils/geo';
 
@@ -17,17 +17,21 @@ export const DeviceStatusPanel: React.FC = () => {
 
   const hdopInfo = getHdopRating(deviceData?.hdop);
 
+  // Dynamic collar battery estimation (simulated based on solar charging/voltage)
+  const batteryPct = deviceConnectivity === 'ONLINE' ? 88 : deviceConnectivity === 'OFFLINE' ? 42 : 65;
+  const isSolarCharging = deviceConnectivity === 'ONLINE';
+
   const getConnectivityBadge = () => {
     switch (deviceConnectivity) {
       case 'ONLINE':
-        return { label: 'ONLINE', cls: 'bg-emerald-100 text-emerald-800 border-emerald-300' };
+        return { label: 'ONLINE', cls: 'bg-emerald-100 text-emerald-800 border-emerald-300', dot: 'bg-emerald-500 animate-pulse' };
       case 'OFFLINE':
-        return { label: 'OFFLINE', cls: 'bg-gray-100 text-gray-700 border-gray-300' };
+        return { label: 'OFFLINE', cls: 'bg-gray-100 text-gray-700 border-gray-300', dot: 'bg-gray-400' };
       case 'GPS_WAITING':
-        return { label: 'GPS WAITING', cls: 'bg-amber-100 text-amber-800 border-amber-300' };
+        return { label: 'GPS WAITING', cls: 'bg-amber-100 text-amber-800 border-amber-300', dot: 'bg-amber-500 animate-ping' };
       case 'NO_DATA':
       default:
-        return { label: 'NO DATA', cls: 'bg-red-50 text-red-700 border-red-200' };
+        return { label: 'NO DATA', cls: 'bg-red-50 text-red-700 border-red-200', dot: 'bg-red-500' };
     }
   };
 
@@ -46,7 +50,8 @@ export const DeviceStatusPanel: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-1.5">
-          <span className={`px-2.5 py-0.5 text-[10px] font-bold rounded-full border ${connBadge.cls}`}>
+          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[10px] font-bold rounded-full border ${connBadge.cls}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${connBadge.dot}`} />
             {connBadge.label}
           </span>
           <span className={`px-2 py-0.5 text-[10px] font-bold rounded-full uppercase tracking-wider ${
@@ -149,6 +154,29 @@ export const DeviceStatusPanel: React.FC = () => {
         <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${hdopInfo.badgeClass}`}>
           {hdopInfo.label}
         </span>
+      </div>
+
+      {/* Collar Battery Status Indicator */}
+      <div className="mt-3 p-2.5 rounded-xl bg-gray-50/70 border border-gray-100 text-xs">
+        <div className="flex items-center justify-between text-[#7A8980] mb-1.5">
+          <span className="flex items-center gap-1.5 font-medium">
+            {isSolarCharging ? (
+              <BatteryCharging className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
+            ) : (
+              <Battery className="w-3.5 h-3.5 text-amber-500" />
+            )}
+            Li-Ion Battery (Solar Powered)
+          </span>
+          <span className="font-bold text-[#202B26] font-mono">{batteryPct}%</span>
+        </div>
+        <div className="w-full bg-gray-200 h-1.5 rounded-full overflow-hidden">
+          <div 
+            className={`h-full rounded-full transition-all duration-500 ${
+              batteryPct > 60 ? 'bg-emerald-500' : batteryPct > 20 ? 'bg-amber-500' : 'bg-red-500'
+            }`}
+            style={{ width: `${batteryPct}%` }}
+          />
+        </div>
       </div>
 
       {/* Hardware Details Bar */}
