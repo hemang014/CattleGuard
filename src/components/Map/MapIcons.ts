@@ -5,16 +5,24 @@ import L from 'leaflet';
  * - Green custom livestock marker when inside
  * - Red marker or red status indicator when outside safe boundary
  */
-export function createCattleMarkerIcon(outside: boolean, isOffline: boolean = false): L.DivIcon {
+export function createCattleMarkerIcon(outside: boolean, isOffline: boolean = false, headingDeg?: number): L.DivIcon {
   const bgColor = isOffline ? '#7A8980' : outside ? '#D94F50' : '#21865B';
   const pulseClass = isOffline ? '' : outside ? 'cattle-pulse-breach' : 'cattle-pulse-safe';
   const label = isOffline ? 'OFFLINE' : outside ? 'OUTSIDE' : 'SAFE ZONE';
+  const hasHeading = headingDeg !== undefined && headingDeg !== null && !isNaN(headingDeg);
 
   const html = `
     <div class="relative flex items-center justify-center cursor-pointer group">
       <!-- Pulsing radar ring -->
       <div class="absolute w-12 h-12 rounded-full ${pulseClass}"></div>
       
+      <!-- Direction Heading Arrow Pointer -->
+      ${hasHeading ? `
+        <div class="absolute -top-3 z-20 flex items-center justify-center transition-transform" style="transform: rotate(${headingDeg}deg);">
+          <div class="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-b-[8px] border-b-amber-400 drop-shadow"></div>
+        </div>
+      ` : ''}
+
       <!-- Marker Pin Body -->
       <div class="relative z-10 flex flex-col items-center">
         <div style="background-color: ${bgColor}" class="w-10 h-10 rounded-full shadow-lg flex items-center justify-center border-2 border-white transition-transform transform group-hover:scale-110">
