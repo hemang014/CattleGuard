@@ -173,6 +173,13 @@ class NotificationService {
       console.warn('Failed to send desktop notification:', err);
     }
   }
+
+  /**
+   * Diagnostic sound test for acoustic piezo alarm
+   */
+  public testBuzzerTone(): void {
+    this.playBreachAlarm();
+  }
 }
 
 export const notificationService = new NotificationService();
